@@ -22,7 +22,30 @@
         "command": "pmp-package-manager.helloWorld",
         "title": "Hello World"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "positron-packages",
+          "title": "Positron",
+          "icon": "$(package)"
+        }
+      ]
+    },
+    "views": {
+      "positron-packages": [
+        {
+          "id": "rPackageView",
+          "name": "R Package",
+          "icon": "$(package)"
+        },
+        {
+          "id": "pythonPackageView",
+          "name": "Python Package",
+          "icon": "$(package)"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "pnpm run package",
