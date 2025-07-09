@@ -7,33 +7,17 @@ import { refreshRPackages } from './rPackageRefresh';
  * Sets up event listeners for Positron runtime changes
  */
 export function setupRuntimeEvents(provider: RPackageProvider, context: vscode.ExtensionContext): void {
-    // Listen for changes in active runtime sessions
+    // Listen for changes in foreground session - only refresh when R session becomes active
     const changeForegroundEvent = positron.runtime.onDidChangeForegroundSession((sessionId) => {
-        // Get the active sessions and check if any is R
-        positron.runtime.getActiveSessions().then((sessions) => {
-            const hasActiveR = sessions.some((session) => session.runtimeMetadata.languageId === 'r');
-            if (hasActiveR) {
-                // Refresh packages when R session becomes active
-                setTimeout(() => {
-                    refreshRPackages(provider);
-                }, 1000);
-            }
-        });
-    });
-
-    // Listen for new runtime registrations
-    const registerRuntimeEvent = positron.runtime.onDidRegisterRuntime((runtime) => {
-        if (runtime.languageId === 'r') {
-            // Refresh packages when new R runtime is registered
-            setTimeout(() => {
-                refreshRPackages(provider);
-            }, 1000);
+        // Only refresh if the new session is an R session
+        if (!sessionId?.startsWith('r-')) { 
+            return; 
         }
+        vscode.commands.executeCommand('pmp-package-manager.refreshRPackages');
     });
 
     // Add to context subscriptions for proper cleanup
     context.subscriptions.push(changeForegroundEvent);
-    context.subscriptions.push(registerRuntimeEvent);
 }
 
 /**

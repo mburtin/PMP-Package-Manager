@@ -42,7 +42,8 @@ export function activate(context: vscode.ExtensionContext) {
             const hasR = await positron.runtime.getRegisteredRuntimes()
                 .then((runtimes) => runtimes.some((runtime) => runtime.languageId === 'r'));
             if (hasR) {
-                refreshRPackages(rPackageProvider);
+                // Use command to avoid duplicate refreshes
+                vscode.commands.executeCommand('pmp-package-manager.refreshRPackages');
             }
         }
     });
@@ -89,7 +90,7 @@ export function activate(context: vscode.ExtensionContext) {
         const hasR = await positron.runtime.getRegisteredRuntimes()
             .then((runtimes) => runtimes.some((runtime) => runtime.languageId === 'r'));
         if (hasR) {
-            refreshRPackages(rPackageProvider);
+            vscode.commands.executeCommand('pmp-package-manager.refreshRPackages');
         }
     }, 1000);
 }

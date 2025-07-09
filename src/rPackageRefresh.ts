@@ -6,6 +6,9 @@ import * as path from 'path';
 import { RPackageProvider } from './rPackageProvider';
 import { RPackageInfo } from './types';
 
+// Global flag to prevent concurrent refreshes
+let isRefreshing = false;
+
 /**
  * Remove ANSI escape codes from a string, so that only the plain text remains.
  */
@@ -34,6 +37,13 @@ function getObserver(template: string): positron.runtime.ExecutionObserver {
     }
 
     const observer: positron.runtime.ExecutionObserver = {
+        // Commenting out onError and onOutput to prevent code from showing in console
+        // onOutput: (message: string) => {
+        //     // Suppress output during silent execution
+        // },
+        // onError: (error: string) => {
+        //     errorHandling(stripAnsi(error));
+        // },
         onFailed: (error: Error) => {
             errorHandling(stripAnsi(error.message));
         }
@@ -64,7 +74,7 @@ async function installJsonlite(): Promise<void> {
 /**
  * Waits for a file to be created with a timeout
  */
-async function waitForFile(filePath: string, timeout: number = 10000): Promise<void> {
+async function waitForFile(filePath: string, timeout: number = 1000): Promise<void> {
     return new Promise((resolve, reject) => {
         const start = Date.now();
 
@@ -86,6 +96,14 @@ async function waitForFile(filePath: string, timeout: number = 10000): Promise<v
  * Based on the original positron-r-package-manager implementation
  */
 export async function refreshRPackages(provider: RPackageProvider): Promise<void> {
+    // Prevent concurrent refreshes
+    if (isRefreshing) {
+        console.log('Refresh already in progress, skipping...');
+        return;
+    }
+
+    isRefreshing = true;
+    
     try {
         // Check if R runtime is available
         const hasR = await positron.runtime.getRegisteredRuntimes()
@@ -186,15 +204,13 @@ export async function refreshRPackages(provider: RPackageProvider): Promise<void
         // Update the provider
         provider.refresh(pkgInfo);
         
-        if (pkgInfo.length > 0) {
-            vscode.window.showInformationMessage(`Refreshed ${pkgInfo.length} R packages`);
-        } else {
-            vscode.window.showInformationMessage('No R packages found');
-        }
+        console.log(`Refreshed ${pkgInfo.length} R packages`);
         
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         vscode.window.showErrorMessage(`Failed to refresh R packages: ${errorMessage}`);
         console.error('Error refreshing R packages:', error);
+    } finally {
+        isRefreshing = false;
     }
 }
