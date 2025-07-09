@@ -16,5 +16,12 @@
 		"paths": {
 		"positron": ["./positron-dts/positron.d.ts"]
 		}
-	}
+	},
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"out"
+	]
 }

@@ -14,15 +14,88 @@
     "url": "https://github.com/mburtin/PMP-Package-Manager.git"
   },
   "license": "MIT",
-  "activationEvents": [],
+  "activationEvents": [
+    "*"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "pmp-package-manager.helloWorld",
-        "title": "Hello World"
+        "command": "pmp-package-manager.refreshRPackages",
+        "title": "Refresh R Packages",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "pmp-package-manager.searchRPackages",
+        "title": "Search R Packages",
+        "icon": "$(search)"
+      },
+      {
+        "command": "pmp-package-manager.installRPackages",
+        "title": "Install R Packages",
+        "icon": "$(add)"
+      },
+      {
+        "command": "pmp-package-manager.uninstallRPackage",
+        "title": "Uninstall R Package",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "pmp-package-manager.updateRPackages",
+        "title": "Update R Packages",
+        "icon": "$(arrow-up)"
+      },
+      {
+        "command": "pmp-package-manager.filterLoadedRPackages",
+        "title": "Show Only Loaded Packages",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "pmp-package-manager.openRPackageHelp",
+        "title": "Open Package Help"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "pmp-package-manager.refreshRPackages",
+          "when": "view == rPackageView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "pmp-package-manager.searchRPackages",
+          "when": "view == rPackageView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "pmp-package-manager.installRPackages",
+          "when": "view == rPackageView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "pmp-package-manager.filterLoadedRPackages",
+          "when": "view == rPackageView",
+          "group": "navigation@4"
+        },
+        {
+          "command": "pmp-package-manager.updateRPackages",
+          "when": "view == rPackageView",
+          "group": "navigation@5"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "pmp-package-manager.uninstallRPackage",
+          "when": "view == rPackageView && viewItem == rPackage",
+          "group": "package@1"
+        },
+        {
+          "command": "pmp-package-manager.openRPackageHelp",
+          "when": "view == rPackageView && viewItem == rPackage",
+          "group": "package@2"
+        }
+      ]
+    },
     "viewsContainers": {
       "activitybar": [
         {
@@ -62,16 +135,20 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.101.0",
+    "@types/fuzzaldrin-plus": "^0.6.5",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
+    "@types/vscode": "^1.101.0",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
-    "eslint": "^9.25.1",
-    "esbuild": "^0.25.3",
-    "npm-run-all": "^4.1.5",
-    "typescript": "^5.8.3",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.5.2"
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.25.3",
+    "eslint": "^9.25.1",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "fuzzaldrin-plus": "^0.6.0"
   }
 }

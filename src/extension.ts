@@ -2,33 +2,96 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as positron from 'positron';
-
-// Simple tree data provider for an empty view
-class EmptyTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
-  getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
-    return element;
-  }
-
-  getChildren(): Thenable<vscode.TreeItem[]> {
-    // Return an empty array for now - you can add items here later
-    return Promise.resolve([]);
-  }
-}
+import { RPackageProvider, RPackageItem } from './rPackageProvider';
+import { PythonPackageProvider } from './pythonPackageProvider';
+import { RPackageCommands } from './rPackageCommands';
+import { refreshRPackages } from './rPackageRefresh';
+import { setupRuntimeEvents } from './runtimeEvents';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-  // Use the console to output diagnostic information (console.log) and errors (console.error)
-  // This line of code will only be executed once when your extension is activated
-  console.log('Congratulations, your extension "positron-package-manager" is now active!');
+    console.log('PMP Package Manager extension is now active!');
 
-  // Create empty tree data providers for R and Python packages
-  const rPackageProvider = new EmptyTreeDataProvider();
-  const pythonPackageProvider = new EmptyTreeDataProvider();
+    // Create providers for R and Python packages
+    const rPackageProvider = new RPackageProvider();
+    const pythonPackageProvider = new PythonPackageProvider();
 
-  // Register the tree data providers for our views
-  vscode.window.registerTreeDataProvider('rPackageView', rPackageProvider);
-  vscode.window.registerTreeDataProvider('pythonPackageView', pythonPackageProvider);
+    // Create R package commands handler
+    const rPackageCommands = new RPackageCommands(rPackageProvider);
+
+    // Register tree data providers
+    const rTreeView = vscode.window.createTreeView('rPackageView', {
+        treeDataProvider: rPackageProvider,
+        showCollapseAll: false,
+        canSelectMany: false
+    });
+
+    // Handle checkbox changes for R packages (load/unload)
+    rTreeView.onDidChangeCheckboxState((event) => {
+        for (const [item, newState] of event.items) {
+            if (item instanceof RPackageItem) {
+                rPackageProvider.handleCheckboxChange(item, newState);
+            }
+        }
+    });
+
+    // Auto-refresh when R tree view becomes visible
+    rTreeView.onDidChangeVisibility(async (event) => {
+        if (event.visible) {
+            const hasR = await positron.runtime.getRegisteredRuntimes()
+                .then((runtimes) => runtimes.some((runtime) => runtime.languageId === 'r'));
+            if (hasR) {
+                refreshRPackages(rPackageProvider);
+            }
+        }
+    });
+
+    // Register Python tree view (placeholder for now)
+    vscode.window.registerTreeDataProvider('pythonPackageView', pythonPackageProvider);
+
+    // Register R package commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('pmp-package-manager.refreshRPackages', () => {
+            refreshRPackages(rPackageProvider);
+        }),
+
+        vscode.commands.registerCommand('pmp-package-manager.searchRPackages', () => {
+            rPackageCommands.searchPackages();
+        }),
+
+        vscode.commands.registerCommand('pmp-package-manager.installRPackages', () => {
+            rPackageCommands.installPackages();
+        }),
+
+        vscode.commands.registerCommand('pmp-package-manager.uninstallRPackage', (item?: RPackageItem) => {
+            rPackageCommands.uninstallPackage(item);
+        }),
+
+        vscode.commands.registerCommand('pmp-package-manager.updateRPackages', () => {
+            rPackageCommands.updatePackages();
+        }),
+
+        vscode.commands.registerCommand('pmp-package-manager.filterLoadedRPackages', () => {
+            rPackageCommands.filterLoadedPackages();
+        }),
+
+        vscode.commands.registerCommand('pmp-package-manager.openRPackageHelp', (packageName: string) => {
+            rPackageCommands.openPackageHelp(packageName);
+        })
+    );
+
+    // Setup runtime event listeners
+    setupRuntimeEvents(rPackageProvider, context);
+
+    // Initial refresh if R is available
+    setTimeout(async () => {
+        const hasR = await positron.runtime.getRegisteredRuntimes()
+            .then((runtimes) => runtimes.some((runtime) => runtime.languageId === 'r'));
+        if (hasR) {
+            refreshRPackages(rPackageProvider);
+        }
+    }, 1000);
 }
 
 // This method is called when your extension is deactivated
